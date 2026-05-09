@@ -6,206 +6,111 @@
 <title>Raster vs Vector — Image Sorting Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ── PASTE YOUR DEPLOYED WEB APP URL BELOW ── */
-  /* Edit the SCRIPT_URL constant in the <script> section */
-
-  :root {
-    --raster-color: #e05c2e;
-    --vector-color: #2e7de0;
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --text: #f0f2ff;
-    --muted: #8890b0;
-    --gold: #f5c842;
-    --green: #38d98a;
-    --red: #f04060;
-    --radius: 16px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── SCREENS ── */
-  .screen { display: none; min-height: 100vh; padding: 24px 20px; }
-  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-  /* ── SETUP SCREEN ── */
-  .logo {
-    font-family: 'Fredoka One', cursive;
-    font-size: 2.6rem;
-    background: linear-gradient(135deg, var(--vector-color) 0%, var(--raster-color) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-  .tagline { color: var(--muted); font-size: 0.95rem; margin-bottom: 32px; text-align: center; }
-  .card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 28px 32px;
-    width: 100%;
-    max-width: 440px;
-    border: 1px solid #2a2e45;
-  }
-  .card label { display: block; font-weight: 700; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-  .card select, .card input {
-    width: 100%;
-    padding: 12px 16px;
-    background: var(--surface2);
-    border: 1.5px solid #2e3250;
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Nunito', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .card select:focus, .card input:focus { border-color: var(--vector-color); }
-  .btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: transform 0.15s, opacity 0.15s;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: linear-gradient(135deg, var(--vector-color), #6a4cf7); color: #fff; }
-  .btn-danger  { background: linear-gradient(135deg, var(--raster-color), #f04060); color: #fff; }
-  .btn-success { background: linear-gradient(135deg, #38d98a, #2eb8d0); color: #fff; }
-  .error-msg { color: var(--red); font-size: 0.85rem; text-align: center; margin-top: 10px; min-height: 20px; }
-
-  /* ── GAME SCREEN ── */
-  #screen-game { justify-content: flex-start; padding: 16px; gap: 0; }
-  .game-header {
-    width: 100%; max-width: 900px; display: flex;
-    align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .player-name { font-weight: 800; font-size: 1rem; }
-  .score-display { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--gold); }
-  /* Timer bomb */
-  .timer-wrap { display: flex; align-items: center; gap: 8px; }
-  .bomb-icon { font-size: 1.6rem; animation: pulse 1s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
-  .timer-bar-bg { width: 120px; height: 10px; background: #2a2e45; border-radius: 5px; overflow: hidden; }
-  .timer-bar { height: 100%; border-radius: 5px; transition: width 1s linear, background 0.3s; }
-  .timer-text { font-family: 'Fredoka One', cursive; font-size: 1rem; min-width: 36px; text-align: right; }
-
-  /* Drag area */
-  .drag-zone { width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-  .file-card {
-    width: 130px; height: 120px;
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 2px dashed #2e3250;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    cursor: grab;
-    user-select: none;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .file-card:active { cursor: grabbing; }
-  .file-card.dragging { opacity: 0.4; transform: scale(0.95); }
-  .file-card.correct-flash { animation: flashGreen 0.5s forwards; }
-  .file-card.wrong-flash   { animation: flashRed 0.5s forwards; }
-  @keyframes flashGreen { 0%{background:var(--surface)} 50%{background:#1a4035;border-color:var(--green)} 100%{background:var(--surface)} }
-  @keyframes flashRed   { 0%{background:var(--surface)} 50%{background:#40121a;border-color:var(--red)}   100%{background:var(--surface)} }
-
-  .file-icon { font-size: 2.6rem; margin-bottom: 6px; }
-  .file-ext {
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.3rem;
-    letter-spacing: 0.02em;
-  }
-  .file-hint { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
-
-  /* Baskets */
-  .baskets { width: 100%; max-width: 900px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .basket {
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    border: 2.5px dashed;
-    min-height: 130px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    transition: background 0.2s, transform 0.1s;
-    position: relative;
-  }
-  .basket.over { transform: scale(1.03); }
-  .basket-vector { border-color: var(--vector-color); background: rgba(46,125,224,0.07); }
-  .basket-raster { border-color: var(--raster-color); background: rgba(224,92,46,0.07); }
-  .basket-vector.over { background: rgba(46,125,224,0.18); }
-  .basket-raster.over { background: rgba(224,92,46,0.18); }
-  .basket-label { font-family: 'Fredoka One', cursive; font-size: 1.3rem; margin-bottom: 6px; }
-  .basket-label.v { color: var(--vector-color); }
-  .basket-label.r { color: var(--raster-color); }
-  .basket-formats { font-size: 0.8rem; color: var(--muted); text-align: center; }
-  .basket-count { position: absolute; top: 10px; right: 14px; font-family: 'Fredoka One', cursive; font-size: 1rem; opacity: 0.5; }
-  .score-popup {
-    position: fixed;
-    pointer-events: none;
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.8rem;
-    animation: floatUp 0.8s ease-out forwards;
-    z-index: 999;
-  }
-  @keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-70px)} }
-
-  /* ── RESULT SCREEN ── */
-  .result-card { max-width: 420px; text-align: center; }
-  .result-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; margin-bottom: 8px; }
-  .result-score { font-family: 'Fredoka One', cursive; font-size: 4rem; color: var(--gold); line-height: 1; margin: 16px 0; }
-  .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 24px; }
-  .stat-box { background: var(--surface2); border-radius: 12px; padding: 12px; }
-  .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
-  .stat-val { font-family: 'Fredoka One', cursive; font-size: 1.6rem; }
-  .stat-val.c { color: var(--green); }
-  .stat-val.w { color: var(--red); }
-
-  /* ── MOBILE TOUCH DRAG GHOST ── */
-  #touch-ghost {
-    position: fixed; pointer-events: none; z-index: 9999;
-    opacity: 0.85; transform: translate(-50%, -50%);
-    display: none;
-  }
+:root{--rc:#e05c2e;--vc:#2e7de0;--bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--tx:#f0f2ff;--mt:#8890b0;--gold:#f5c842;--green:#38d98a;--red:#f04060;--rad:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:24px 20px}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.logo{font-family:'Fredoka One',cursive;font-size:2.6rem;background:linear-gradient(135deg,var(--vc),var(--rc));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;text-align:center}
+.tagline{color:var(--mt);font-size:.9rem;margin-bottom:28px;text-align:center}
+.card{background:var(--sf);border-radius:var(--rad);padding:26px 28px;width:100%;max-width:440px;border:1px solid #2a2e45}
+.card label{display:block;font-weight:700;font-size:.82rem;color:var(--mt);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.card select,.card input[type=text],.card input[type=password],.card input[type=number]{width:100%;padding:11px 14px;background:var(--sf2);border:1.5px solid #2e3250;border-radius:10px;color:var(--tx);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:600;margin-bottom:18px;outline:none;transition:border-color .2s}
+.card select:focus,.card input:focus{border-color:var(--vc)}
+.locked-name{background:var(--sf2);border:1.5px solid #3a3e60;border-radius:10px;padding:11px 14px;font-weight:700;font-size:.95rem;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;color:var(--tx)}
+.locked-badge{font-size:.7rem;background:#2e3250;color:var(--mt);padding:3px 8px;border-radius:6px;font-weight:600}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;transition:transform .15s;margin-top:2px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--vc),#6a4cf7);color:#fff}
+.btn-success{background:linear-gradient(135deg,#38d98a,#2eb8d0);color:#fff}
+.btn-warn{background:linear-gradient(135deg,#f5c842,#f0902e);color:#1a1a1a}
+.error-msg{color:var(--red);font-size:.83rem;text-align:center;margin-top:8px;min-height:18px}
+.plays-info{text-align:center;font-size:.82rem;color:var(--mt);margin-bottom:14px}
+.plays-info span{color:var(--gold);font-weight:700}
+#screen-game{justify-content:flex-start;padding:14px;gap:0}
+.game-header{width:100%;max-width:900px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.player-name{font-weight:800;font-size:.95rem}
+.score-display{font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--gold)}
+.timer-wrap{display:flex;align-items:center;gap:7px}
+.bomb-icon{font-size:1.5rem;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.timer-bar-bg{width:110px;height:9px;background:#2a2e45;border-radius:5px;overflow:hidden}
+.timer-bar{height:100%;border-radius:5px;transition:width 1s linear,background .3s}
+.timer-text{font-family:'Fredoka One',cursive;font-size:.95rem;min-width:32px;text-align:right}
+.drag-zone{width:100%;max-width:900px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.file-card{width:125px;height:115px;background:var(--sf);border-radius:var(--rad);border:2px dashed #2e3250;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;user-select:none;transition:transform .2s,border-color .2s;overflow:hidden}
+.file-card:active{cursor:grabbing}
+.file-card.dragging{opacity:.4;transform:scale(.94)}
+.file-card.correct-flash{animation:fGreen .5s forwards}
+.file-card.wrong-flash{animation:fRed .5s forwards}
+@keyframes fGreen{0%{background:var(--sf)}50%{background:#1a4035;border-color:var(--green)}100%{background:var(--sf)}}
+@keyframes fRed{0%{background:var(--sf)}50%{background:#40121a;border-color:var(--red)}100%{background:var(--sf)}}
+.file-icon{font-size:2.4rem;margin-bottom:5px}
+.file-ext{font-family:'Fredoka One',cursive;font-size:1.25rem}
+.file-hint{font-size:.7rem;color:var(--mt);margin-top:2px}
+.baskets{width:100%;max-width:900px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.basket{border-radius:var(--rad);padding:14px 18px;border:2.5px dashed;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .2s,transform .1s;position:relative}
+.basket.over{transform:scale(1.03)}
+.basket-vector{border-color:var(--vc);background:rgba(46,125,224,.07)}
+.basket-raster{border-color:var(--rc);background:rgba(224,92,46,.07)}
+.basket-vector.over{background:rgba(46,125,224,.18)}
+.basket-raster.over{background:rgba(224,92,46,.18)}
+.basket-label{font-family:'Fredoka One',cursive;font-size:1.25rem;margin-bottom:5px}
+.basket-label.v{color:var(--vc)}
+.basket-label.r{color:var(--rc)}
+.basket-formats{font-size:.78rem;color:var(--mt);text-align:center}
+.basket-count{position:absolute;top:9px;right:12px;font-family:'Fredoka One',cursive;font-size:.95rem;opacity:.45}
+.score-popup{position:fixed;pointer-events:none;font-family:'Fredoka One',cursive;font-size:1.8rem;animation:floatUp .8s ease-out forwards;z-index:999}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-65px)}}
+.result-card{max-width:400px;text-align:center}
+.result-title{font-family:'Fredoka One',cursive;font-size:2.1rem;margin-bottom:6px}
+.result-score{font-family:'Fredoka One',cursive;font-size:4rem;color:var(--gold);line-height:1;margin:14px 0}
+.result-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 20px}
+.stat-box{background:var(--sf2);border-radius:12px;padding:11px}
+.stat-label{font-size:.75rem;color:var(--mt);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.stat-val{font-family:'Fredoka One',cursive;font-size:1.5rem}
+.stat-val.c{color:var(--green)}
+.stat-val.w{color:var(--red)}
+.finished-box{background:var(--sf);border:1px solid #2a2e45;border-radius:var(--rad);padding:28px;text-align:center;max-width:380px}
+.finished-box h2{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--gold);margin-bottom:10px}
+.finished-box p{color:var(--mt);font-size:.9rem;line-height:1.6}
+/* ADMIN */
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center}
+.admin-overlay.open{display:flex}
+.admin-panel{background:var(--sf);border-radius:var(--rad);padding:26px 26px 20px;width:90%;max-width:380px;border:1px solid #3a3e60}
+.admin-panel h3{font-family:'Fredoka One',cursive;font-size:1.45rem;color:var(--gold);margin-bottom:14px;text-align:center}
+.admin-input{width:100%;padding:10px 13px;background:var(--sf2);border:1.5px solid #2e3250;border-radius:9px;color:var(--tx);font-family:'Nunito',sans-serif;font-size:.95rem;margin-bottom:12px;outline:none}
+.admin-info{font-size:.82rem;color:var(--mt);background:var(--sf2);padding:12px;border-radius:9px;margin-bottom:14px;line-height:1.7}
+.admin-info b{color:var(--tx)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{padding:9px 14px;font-size:.85rem;border:none;border-radius:9px;font-family:'Fredoka One',cursive;cursor:pointer;transition:transform .15s;white-space:nowrap}
+.btn-sm:active{transform:scale(.96)}
+.btn-red{background:var(--red);color:#fff}
+.btn-gray{background:#2a2e45;color:var(--mt)}
+#hidden-tap{position:fixed;bottom:0;right:0;width:44px;height:44px;z-index:8000;opacity:0;cursor:default}
+#touch-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:translate(-50%,-50%);display:none}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════ SETUP SCREEN ═══════════════════════════════ -->
+<!-- ═══════ SETUP SCREEN ═══════ -->
 <div id="screen-setup" class="screen active">
   <div class="logo">🖼 Raster vs Vector</div>
-  <p class="tagline">Drag each format into the right basket to score points!</p>
+  <p class="tagline">Drag each file format into the correct basket!</p>
   <div class="card">
-    <label>Select Your Name</label>
-    <select id="student-select">
-      <option value="">— Loading students… —</option>
-    </select>
+    <label>Your Name</label>
+    <div id="name-area"></div>
 
-    <label>Game Key (if required)</label>
-    <input type="password" id="game-key-input" placeholder="Enter key or leave blank">
+    <label>Game Key <span style="font-size:.75rem;opacity:.55">(No key? Contact: 8893572233)</span></label>
+    <input type="password" id="game-key-input" placeholder="Type the key here or paste it">
 
-    <button class="btn btn-primary" onclick="startGame()">🚀 Start Game</button>
+    <div class="plays-info" id="plays-info" style="display:none"></div>
+    <button class="btn btn-primary" id="start-btn" onclick="startGame()">🚀 Start Game</button>
     <p class="error-msg" id="setup-error"></p>
   </div>
 </div>
 
-<!-- ═══════════════════════════════ GAME SCREEN ════════════════════════════════ -->
+<!-- ═══════ GAME SCREEN ═══════ -->
 <div id="screen-game" class="screen">
   <div class="game-header">
     <span class="player-name">👤 <span id="hdr-name"></span></span>
@@ -216,20 +121,16 @@
     </div>
     <span class="score-display">⭐ <span id="hdr-score">0</span></span>
   </div>
-
-  <div class="drag-zone" id="drag-zone">
-    <!-- cards injected by JS -->
-  </div>
-
+  <div class="drag-zone" id="drag-zone"></div>
   <div class="baskets">
     <div class="basket basket-vector" id="basket-vector"
-         ondragover="onDragOver(event,'vector')" ondragleave="onDragLeave(event,'vector')" ondrop="onDrop(event,'vector')">
+      ondragover="onDragOver(event,'vector')" ondragleave="onDragLeave(event,'vector')" ondrop="onDrop(event,'vector')">
       <span class="basket-count" id="cnt-vector">0</span>
       <div class="basket-label v">📐 Vector</div>
       <div class="basket-formats">SVG · CDR · EPS</div>
     </div>
     <div class="basket basket-raster" id="basket-raster"
-         ondragover="onDragOver(event,'raster')" ondragleave="onDragLeave(event,'raster')" ondrop="onDrop(event,'raster')">
+      ondragover="onDragOver(event,'raster')" ondragleave="onDragLeave(event,'raster')" ondrop="onDrop(event,'raster')">
       <span class="basket-count" id="cnt-raster">0</span>
       <div class="basket-label r">🖼 Raster</div>
       <div class="basket-formats">PNG · JPEG · JPG · GIF</div>
@@ -237,313 +138,373 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════ RESULT SCREEN ════════════════════════════════ -->
+<!-- ═══════ RESULT SCREEN ═══════ -->
 <div id="screen-result" class="screen">
   <div class="card result-card">
     <div class="result-title" id="result-title">🎉 Time's Up!</div>
-    <p id="result-player" style="color:var(--muted); margin-bottom:4px;"></p>
+    <p id="result-player" style="color:var(--mt);margin-bottom:4px"></p>
     <div class="result-score" id="result-score">0</div>
-    <p style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">points</p>
+    <p style="color:var(--mt);font-size:.82rem;margin-bottom:4px">points</p>
     <div class="result-stats">
-      <div class="stat-box">
-        <div class="stat-label">✅ Correct</div>
-        <div class="stat-val c" id="stat-correct">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">❌ Wrong</div>
-        <div class="stat-val w" id="stat-wrong">0</div>
-      </div>
+      <div class="stat-box"><div class="stat-label">✅ Correct</div><div class="stat-val c" id="stat-correct">0</div></div>
+      <div class="stat-box"><div class="stat-label">❌ Wrong</div><div class="stat-val w" id="stat-wrong">0</div></div>
     </div>
-    <button class="btn btn-success" onclick="playAgain()" style="margin-bottom:12px;">🔁 Play Again</button>
-    <button class="btn btn-danger"  onclick="goHome()"   >🏠 Change Player</button>
+    <div id="play-again-area"></div>
   </div>
 </div>
 
-<!-- Touch drag ghost -->
+<!-- ═══════ ALL DONE SCREEN ═══════ -->
+<div id="screen-done" class="screen">
+  <div class="finished-box">
+    <h2>🏁 All Done!</h2>
+    <p id="done-msg">You have used all your attempts.<br>Check with your teacher for your results!</p>
+    <p style="margin-top:18px;font-size:.75rem;color:#444">— Raster vs Vector Game —</p>
+  </div>
+</div>
+
+<!-- ═══════ ADMIN OVERLAY ═══════ -->
+<div class="admin-overlay" id="admin-overlay">
+  <div class="admin-panel">
+    <h3>🔐 Admin Panel</h3>
+    <div id="admin-auth">
+      <label style="display:block;font-size:.82rem;color:var(--mt);margin-bottom:7px">Admin Password</label>
+      <input class="admin-input" type="password" id="admin-pwd" placeholder="Enter password">
+      <div class="row">
+        <button class="btn-sm btn-red" onclick="adminLogin()">Unlock</button>
+        <button class="btn-sm btn-gray" onclick="closeAdmin()">Cancel</button>
+      </div>
+      <p class="error-msg" id="admin-err" style="text-align:left;margin-top:8px"></p>
+    </div>
+    <div id="admin-actions" style="display:none">
+      <div class="admin-info" id="admin-info"></div>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn-sm btn-red" onclick="adminClearThis()">🗑 Clear This Student</button>
+        <button class="btn-sm btn-gray" onclick="adminClearAll()">⚠️ Clear All Data</button>
+      </div>
+      <button class="btn-sm btn-gray" onclick="closeAdmin()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden tap zone — 5 taps on bottom-right corner opens admin -->
+<div id="hidden-tap" onclick="hiddenTap()"></div>
 <div id="touch-ghost"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURATION — paste your Apps Script Web App URL here
-// ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  ⚙️  PASTE YOUR APPS SCRIPT WEB APP URL HERE
+// ══════════════════════════════════════════════
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVidJpgwocgLy3waTYuwBdfU-evzFCbfE1TsrUYyDwHw_a2PSuUohDmXufY4qf2F5V/exec";
 
-// ── File data ─────────────────────────────────────────────────
-const ALL_FILES = [
-  { ext:"SVG",  type:"vector", icon:"📐", color:"#2e7de0", hint:"Scalable Vector" },
-  { ext:"CDR",  type:"vector", icon:"✏️",  color:"#6a4cf7", hint:"CorelDRAW" },
-  { ext:"EPS",  type:"vector", icon:"🔷",  color:"#2e90e0", hint:"Encapsulated PS" },
-  { ext:"PNG",  type:"raster", icon:"🖼",  color:"#e05c2e", hint:"Lossless Bitmap" },
-  { ext:"JPEG", type:"raster", icon:"📷",  color:"#d0402a", hint:"Compressed Photo" },
-  { ext:"JPG",  type:"raster", icon:"📷",  color:"#d0402a", hint:"Compressed Photo" },
-  { ext:"GIF",  type:"raster", icon:"🎞",  color:"#c0341e", hint:"Animated Bitmap" },
+// Admin password (change this!)
+const ADMIN_PWD = "teacher123";
+
+// LocalStorage keys
+const LS_NAME  = "rvg_name";
+const LS_PLAYS = "rvg_plays";
+
+// File definitions
+const FILES = [
+  {ext:"SVG", type:"vector",icon:"📐",color:"#2e7de0",hint:"Scalable Vector"},
+  {ext:"CDR", type:"vector",icon:"✏️", color:"#6a4cf7",hint:"CorelDRAW"},
+  {ext:"EPS", type:"vector",icon:"🔷",color:"#2e90e0",hint:"Encapsulated PS"},
+  {ext:"PNG", type:"raster",icon:"🖼", color:"#e05c2e",hint:"Lossless Bitmap"},
+  {ext:"JPEG",type:"raster",icon:"📷",color:"#d0402a",hint:"Compressed Photo"},
+  {ext:"JPG", type:"raster",icon:"📷",color:"#c83020",hint:"Compressed Photo"},
+  {ext:"GIF", type:"raster",icon:"🎞", color:"#c0341e",hint:"Animated Bitmap"},
 ];
 
-// ── State ────────────────────────────────────────────────────
-let config        = { gameTime: 60, gameKey: "" };
-let students      = [];
-let currentPlayer = "";
-let score         = 0;
-let correct       = 0;
-let wrong         = 0;
-let timeLeft      = 60;
-let timerInterval = null;
-let totalTime     = 60;
-let dragItem      = null;
-let queue         = [];
-let basketCnt     = { vector: 0, raster: 0 };
-let gameStartTime = null;
+// Game state
+let cfg = {gameTime:60, gameKey:"", maxPlays:1};
+// maxPlays: 1 = once, 0 = unlimited, N = N times
+let students=[], currentPlayer="", playsUsed=0;
+let score=0, correct=0, wrong=0;
+let timeLeft=60, totalTime=60, timerInterval=null, gameStartTime=null;
+let queue=[], basketCnt={vector:0,raster:0}, dragItem=null;
+let tapCount=0, tapTimer=null;
 
-// ── Init ─────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────
 window.onload = async () => {
-  try {
-    const cfg = await api("getConfig");
-    if (cfg.success) config = cfg;
-    const std = await api("getStudents");
-    if (std.success) {
-      students = std.students;
-      const sel = document.getElementById("student-select");
-      sel.innerHTML = '<option value="">— Select your name —</option>' +
-        students.map(n => `<option value="${n}">${n}</option>`).join("");
-    }
-  } catch(e) { console.warn("API not set up yet — using defaults."); }
+  await loadRemote();
+  renderSetup();
 };
 
-async function api(action, data={}) {
-  if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS")) {
-    // Demo mode: return mock data
-    if (action==="getConfig")   return { success:true, gameTime:60, gameKey:"" };
-    if (action==="getStudents") return { success:true, students:["Alice","Bob","Charlie","Student 1","Student 2"] };
-    if (action==="saveScore")   return { success:true };
-  }
-  const res = await fetch(SCRIPT_URL, {
-    method:"POST",
-    body: JSON.stringify({ action, ...data })
-  });
-  return res.json();
+async function loadRemote() {
+  try {
+    const c = await api("getConfig");
+    if (c.success) cfg = {...cfg, ...c};
+    const s = await api("getStudents");
+    if (s.success) students = s.students;
+  } catch(e) { /* demo mode */ }
 }
 
-// ── Start game ───────────────────────────────────────────────
-async function startGame() {
-  const sel   = document.getElementById("student-select");
-  const key   = document.getElementById("game-key-input").value.trim();
-  const err   = document.getElementById("setup-error");
-  const name  = sel.value;
+// ── Setup screen ──────────────────────────────────────────
+function renderSetup() {
+  const area      = document.getElementById("name-area");
+  const playsEl   = document.getElementById("plays-info");
+  const startBtn  = document.getElementById("start-btn");
+  const savedName = localStorage.getItem(LS_NAME);
+  playsUsed       = parseInt(localStorage.getItem(LS_PLAYS)||"0");
+  const max       = cfg.maxPlays; // 0 = unlimited
 
-  if (!name) { err.textContent = "Please select your name."; return; }
-  if (config.gameKey && key !== config.gameKey) {
-    err.textContent = "❌ Invalid game key. Ask your teacher."; return;
+  if (savedName) {
+    currentPlayer = savedName;
+    area.innerHTML = `<div class="locked-name"><span>👤 ${savedName}</span><span class="locked-badge">🔒 Locked</span></div>`;
+
+    // Already used all plays?
+    if (max > 0 && playsUsed >= max) {
+      showDone(savedName, max);
+      return;
+    }
+
+    if (max === 0) {
+      playsEl.style.display="block";
+      playsEl.innerHTML = "Unlimited plays — play as many times as you like!";
+    } else {
+      const rem = max - playsUsed;
+      playsEl.style.display="block";
+      playsEl.innerHTML = `Attempts remaining: <span>${rem}</span> of ${max}`;
+    }
+    startBtn.textContent = playsUsed > 0 ? "🔁 Play Again" : "🚀 Start Game";
+
+  } else {
+    // First visit — show name picker
+    playsEl.style.display = "none";
+    if (students.length > 0) {
+      const opts = '<option value="">— Select your name —</option>' +
+        students.map(n=>`<option value="${n}">${n}</option>`).join("");
+      area.innerHTML = `<select id="student-sel">${opts}</select>`;
+    } else {
+      area.innerHTML = `<input type="text" id="student-txt" placeholder="Type your name here">`;
+    }
+    startBtn.textContent = "🚀 Start Game";
   }
-  err.textContent = "";
-  currentPlayer   = name;
-  totalTime       = config.gameTime || 60;
-  score=0; correct=0; wrong=0; basketCnt={vector:0,raster:0};
+}
 
-  document.getElementById("hdr-name").textContent  = name;
-  document.getElementById("hdr-score").textContent = 0;
+function showDone(name, max) {
+  document.getElementById("done-msg").innerHTML =
+    `Hi <b>${name}</b>, you have completed all <b>${max}</b> attempt${max>1?"s":""}.<br>Check with your teacher for your score! 🎉`;
+  showScreen("done");
+}
+
+// ── Start game ────────────────────────────────────────────
+async function startGame() {
+  const err = document.getElementById("setup-error");
+  err.textContent = "";
+
+  // Resolve name if first time
+  if (!currentPlayer) {
+    const sel = document.getElementById("student-sel");
+    const txt = document.getElementById("student-txt");
+    const nm  = sel ? sel.value.trim() : (txt ? txt.value.trim() : "");
+    if (!nm) { err.textContent = "Please select or enter your name first."; return; }
+    currentPlayer = nm;
+    localStorage.setItem(LS_NAME, nm);
+    playsUsed = 0;
+    localStorage.setItem(LS_PLAYS, "0");
+  }
+
+  // Game key check
+  const keyIn = document.getElementById("game-key-input").value.trim();
+  if (cfg.gameKey && keyIn !== String(cfg.gameKey)) {
+    err.textContent = "❌ Wrong game key — ask your teacher."; return;
+  }
+
+  // Max plays check
+  const max = cfg.maxPlays;
+  if (max > 0 && playsUsed >= max) { showDone(currentPlayer, max); return; }
+
+  // Init
+  totalTime = cfg.gameTime || 60;
+  score=0; correct=0; wrong=0; basketCnt={vector:0,raster:0};
+  document.getElementById("hdr-name").textContent   = currentPlayer;
+  document.getElementById("hdr-score").textContent  = 0;
   document.getElementById("cnt-vector").textContent = 0;
   document.getElementById("cnt-raster").textContent = 0;
 
-  buildQueue();
-  renderQueue();
+  buildQueue(); renderQueue();
   showScreen("game");
   startTimer();
   gameStartTime = Date.now();
 }
 
+// ── Queue ─────────────────────────────────────────────────
 function buildQueue() {
-  // Create a randomised infinite-ish queue of cards
-  queue = [];
-  const shuffled = [...ALL_FILES].sort(() => Math.random()-0.5);
-  queue = shuffled.concat([...ALL_FILES].sort(() => Math.random()-0.5));
+  queue = [...FILES,...FILES].sort(()=>Math.random()-.5);
 }
-
 function renderQueue() {
-  const zone = document.getElementById("drag-zone");
-  zone.innerHTML = "";
-  const visible = queue.slice(0, Math.min(5, queue.length));
-  visible.forEach((f, i) => {
-    const card = makeCard(f, i);
-    zone.appendChild(card);
-  });
+  const z = document.getElementById("drag-zone");
+  z.innerHTML = "";
+  queue.slice(0,5).forEach(f=>z.appendChild(makeCard(f)));
+}
+function makeCard(f) {
+  const d = document.createElement("div");
+  d.className  = "file-card";
+  d.draggable  = true;
+  d.dataset.ext  = f.ext;
+  d.dataset.type = f.type;
+  d.innerHTML = `<div class="file-icon">${f.icon}</div><div class="file-ext" style="color:${f.color}">.${f.ext}</div><div class="file-hint">${f.hint}</div>`;
+  d.addEventListener("dragstart",e=>{dragItem=d;d.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+  d.addEventListener("dragend",  ()=>d.classList.remove("dragging"));
+  d.addEventListener("touchstart",touchStart,{passive:false});
+  d.addEventListener("touchmove", touchMove, {passive:false});
+  d.addEventListener("touchend",  touchEnd,  {passive:false});
+  return d;
 }
 
-function makeCard(f, idx) {
-  const div = document.createElement("div");
-  div.className = "file-card";
-  div.draggable  = true;
-  div.dataset.ext  = f.ext;
-  div.dataset.type = f.type;
-  div.dataset.idx  = idx;
-  div.innerHTML = `
-    <div class="file-icon">${f.icon}</div>
-    <div class="file-ext" style="color:${f.color}">.${f.ext}</div>
-    <div class="file-hint">${f.hint}</div>
-  `;
-  // Desktop drag
-  div.addEventListener("dragstart", e => {
-    dragItem = div;
-    div.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-  });
-  div.addEventListener("dragend", () => div.classList.remove("dragging"));
-  // Touch drag
-  div.addEventListener("touchstart", touchStart, {passive:false});
-  div.addEventListener("touchmove",  touchMove,  {passive:false});
-  div.addEventListener("touchend",   touchEnd,   {passive:false});
-  return div;
-}
+// ── D&D Desktop ───────────────────────────────────────────
+function onDragOver(e,s){e.preventDefault();document.getElementById("basket-"+s).classList.add("over")}
+function onDragLeave(e,s){document.getElementById("basket-"+s).classList.remove("over")}
+function onDrop(e,s){e.preventDefault();document.getElementById("basket-"+s).classList.remove("over");if(dragItem)evaluate(dragItem,s)}
 
-// ── Drag & Drop (desktop) ─────────────────────────────────────
-function onDragOver(e, side) {
+// ── Touch D&D ─────────────────────────────────────────────
+let touchCard=null;
+function touchStart(e){
+  touchCard=e.currentTarget;
+  const g=document.getElementById("touch-ghost");
+  g.innerHTML=touchCard.innerHTML;
+  Object.assign(g.style,{width:touchCard.offsetWidth+"px",height:touchCard.offsetHeight+"px",
+    background:getComputedStyle(touchCard).background,borderRadius:"16px",
+    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"});
+  const t=e.touches[0]; g.style.left=t.clientX+"px"; g.style.top=t.clientY+"px";
+}
+function touchMove(e){
   e.preventDefault();
-  document.getElementById("basket-"+side).classList.add("over");
+  const t=e.touches[0],g=document.getElementById("touch-ghost");
+  g.style.left=t.clientX+"px"; g.style.top=t.clientY+"px";
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  ["vector","raster"].forEach(s=>{const b=document.getElementById("basket-"+s);if(b)b.classList[b.contains(el)?"add":"remove"]("over");});
 }
-function onDragLeave(e, side) {
-  document.getElementById("basket-"+side).classList.remove("over");
-}
-function onDrop(e, side) {
-  e.preventDefault();
-  document.getElementById("basket-"+side).classList.remove("over");
-  if (dragItem) evaluate(dragItem, side);
-}
-
-// ── Touch drag ───────────────────────────────────────────────
-let touchCard = null, ghost = null;
-function touchStart(e) {
-  touchCard = e.currentTarget;
-  ghost     = document.getElementById("touch-ghost");
-  ghost.innerHTML  = touchCard.innerHTML;
-  ghost.style.width = touchCard.offsetWidth+"px";
-  ghost.style.height= touchCard.offsetHeight+"px";
-  ghost.style.background = getComputedStyle(touchCard).background;
-  ghost.style.borderRadius= "16px";
-  ghost.style.display="flex";
-  ghost.style.flexDirection="column";
-  ghost.style.alignItems="center";
-  ghost.style.justifyContent="center";
-  const t = e.touches[0];
-  ghost.style.left = t.clientX+"px";
-  ghost.style.top  = t.clientY+"px";
-}
-function touchMove(e) {
-  e.preventDefault();
-  const t = e.touches[0];
-  ghost.style.left = t.clientX+"px";
-  ghost.style.top  = t.clientY+"px";
-  // highlight basket under finger
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  ["vector","raster"].forEach(s => {
-    const b = document.getElementById("basket-"+s);
-    if (b && b.contains(el)) b.classList.add("over");
-    else if (b) b.classList.remove("over");
-  });
-}
-function touchEnd(e) {
-  ghost.style.display = "none";
-  const t = e.changedTouches[0];
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  ["vector","raster"].forEach(s => {
-    const b = document.getElementById("basket-"+s);
-    if (b) { b.classList.remove("over"); if (b.contains(el)) evaluate(touchCard, s); }
-  });
-  touchCard = null;
+function touchEnd(e){
+  document.getElementById("touch-ghost").style.display="none";
+  const t=e.changedTouches[0],el=document.elementFromPoint(t.clientX,t.clientY);
+  ["vector","raster"].forEach(s=>{const b=document.getElementById("basket-"+s);if(b){b.classList.remove("over");if(b.contains(el))evaluate(touchCard,s);}});
+  touchCard=null;
 }
 
-// ── Evaluate drop ─────────────────────────────────────────────
-function evaluate(card, droppedOn) {
-  const correct_type = card.dataset.type;
-  const isCorrect    = correct_type === droppedOn;
+// ── Evaluate drop ─────────────────────────────────────────
+function evaluate(card,dropped){
+  const ok=card.dataset.type===dropped;
+  if(ok){score++;correct++;card.classList.add("correct-flash");spawnPopup(card,"+1","#38d98a");basketCnt[dropped]++;document.getElementById("cnt-"+dropped).textContent=basketCnt[dropped];}
+  else  {score=Math.max(0,score-1);wrong++;card.classList.add("wrong-flash");spawnPopup(card,"-1","#f04060");}
+  document.getElementById("hdr-score").textContent=score;
+  setTimeout(()=>{queue.shift();if(queue.length<5)queue=queue.concat([...FILES].sort(()=>Math.random()-.5));renderQueue();},420);
+}
+function spawnPopup(card,txt,col){
+  const r=card.getBoundingClientRect(),el=document.createElement("div");
+  el.className="score-popup";el.textContent=txt;el.style.color=col;
+  el.style.left=(r.left+r.width/2)+"px";el.style.top=(r.top-10)+"px";
+  document.body.appendChild(el);setTimeout(()=>el.remove(),900);
+}
 
-  if (isCorrect) {
-    score   += 1;
-    correct += 1;
-    card.classList.add("correct-flash");
-    spawnPopup(card, "+1", "#38d98a");
-    basketCnt[droppedOn]++;
-    document.getElementById("cnt-"+droppedOn).textContent = basketCnt[droppedOn];
+// ── Timer ─────────────────────────────────────────────────
+function startTimer(){
+  timeLeft=totalTime;updateTimerUI();
+  timerInterval=setInterval(()=>{timeLeft--;updateTimerUI();if(timeLeft<=0)endGame();},1000);
+}
+function updateTimerUI(){
+  const p=(timeLeft/totalTime)*100;
+  document.getElementById("timer-bar").style.width=p+"%";
+  document.getElementById("timer-bar").style.background=p>50?"#38d98a":p>25?"#f5c842":"#f04060";
+  document.getElementById("timer-text").textContent=timeLeft;
+  document.getElementById("bomb").textContent=timeLeft<=10?"💥":"💣";
+  document.getElementById("bomb").style.animation=timeLeft<=10?"pulse .35s ease-in-out infinite":"pulse 1s ease-in-out infinite";
+}
+
+// ── End game ──────────────────────────────────────────────
+async function endGame(){
+  clearInterval(timerInterval);
+  const elapsed=Math.round((Date.now()-gameStartTime)/1000);
+  playsUsed++;
+  localStorage.setItem(LS_PLAYS,String(playsUsed));
+
+  const max=cfg.maxPlays;
+  const hasMore=max===0||playsUsed<max;
+
+  document.getElementById("result-title").textContent = score>=5?"🎉 Great Job!":"⏰ Time's Up!";
+  document.getElementById("result-player").textContent= "Player: "+currentPlayer;
+  document.getElementById("result-score").textContent = score;
+  document.getElementById("stat-correct").textContent = correct;
+  document.getElementById("stat-wrong").textContent   = wrong;
+
+  const area=document.getElementById("play-again-area");
+  if(hasMore){
+    const rem=max>0?max-playsUsed:"∞";
+    area.innerHTML=`<button class="btn btn-warn" onclick="playAgain()" style="margin-bottom:8px">🔁 Play Again${max>0?" ("+rem+" left)":""}</button><p style="color:var(--mt);font-size:.78rem;margin-top:4px">Score saved ✓</p>`;
   } else {
-    score = Math.max(0, score - 1);
-    wrong += 1;
-    card.classList.add("wrong-flash");
-    spawnPopup(card, "-1", "#f04060");
+    area.innerHTML=`<div style="background:var(--sf2);border-radius:12px;padding:14px;margin-top:4px"><p style="color:var(--gold);font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:4px">🏁 All attempts used!</p><p style="color:var(--mt);font-size:.82rem">Your score has been saved. Well done!</p></div>`;
   }
-
-  document.getElementById("hdr-score").textContent = score;
-
-  // Remove card and pull next from queue
-  setTimeout(() => {
-    queue.shift();
-    if (queue.length < 5) {
-      queue = queue.concat([...ALL_FILES].sort(() => Math.random()-0.5));
-    }
-    renderQueue();
-  }, 400);
-}
-
-function spawnPopup(card, text, color) {
-  const r   = card.getBoundingClientRect();
-  const el  = document.createElement("div");
-  el.className = "score-popup";
-  el.textContent = text;
-  el.style.color = color;
-  el.style.left  = (r.left + r.width/2) + "px";
-  el.style.top   = (r.top  - 10) + "px";
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 900);
-}
-
-// ── Timer ────────────────────────────────────────────────────
-function startTimer() {
-  timeLeft = totalTime;
-  updateTimerUI();
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateTimerUI();
-    if (timeLeft <= 0) endGame();
-  }, 1000);
-}
-
-function updateTimerUI() {
-  const pct = (timeLeft / totalTime) * 100;
-  const bar = document.getElementById("timer-bar");
-  bar.style.width = pct + "%";
-  bar.style.background = pct > 50 ? "#38d98a" : pct > 25 ? "#f5c842" : "#f04060";
-  document.getElementById("timer-text").textContent = timeLeft;
-  document.getElementById("bomb").textContent = timeLeft <= 10 ? "💥" : "💣";
-  // Shake bomb when low
-  if (timeLeft <= 10) document.getElementById("bomb").style.animation = "pulse 0.4s ease-in-out infinite";
-}
-
-async function endGame() {
-  clearInterval(timerInterval);
-  const elapsed = Math.round((Date.now() - gameStartTime) / 1000);
-
-  document.getElementById("result-title").textContent  = score >= 5 ? "🎉 Great Job!" : "⏰ Time's Up!";
-  document.getElementById("result-player").textContent = "Player: " + currentPlayer;
-  document.getElementById("result-score").textContent  = score;
-  document.getElementById("stat-correct").textContent  = correct;
-  document.getElementById("stat-wrong").textContent    = wrong;
-
   showScreen("result");
-
-  // Save to sheet
-  try {
-    await api("saveScore", { name:currentPlayer, score, correct, wrong, time:elapsed });
-  } catch(e) { console.warn("Could not save score:", e); }
+  try{await api("saveScore",{name:currentPlayer,score,correct,wrong,time:elapsed,play:playsUsed});}catch(e){}
 }
 
-function playAgain() {
+function playAgain(){
   clearInterval(timerInterval);
-  startGame();
+  if(cfg.maxPlays>0&&playsUsed>=cfg.maxPlays){showDone(currentPlayer,cfg.maxPlays);return;}
+  score=0;correct=0;wrong=0;basketCnt={vector:0,raster:0};
+  document.getElementById("hdr-score").textContent=0;
+  document.getElementById("cnt-vector").textContent=0;
+  document.getElementById("cnt-raster").textContent=0;
+  buildQueue();renderQueue();
+  showScreen("game");startTimer();gameStartTime=Date.now();
 }
-function goHome() {
-  clearInterval(timerInterval);
-  showScreen("setup");
-}
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById("screen-"+id).classList.add("active");
+}
+
+// ── API ───────────────────────────────────────────────────
+async function api(action,data={}){
+  if(!SCRIPT_URL||SCRIPT_URL.includes("YOUR_APPS")){
+    if(action==="getConfig")   return{success:true,gameTime:60,gameKey:"",maxPlays:2};
+    if(action==="getStudents") return{success:true,students:["Alice","Bob","Charlie","Demo Student"]};
+    if(action==="saveScore")   return{success:true};
+  }
+  const r=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action,...data})});
+  return r.json();
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN — tap bottom-right corner 5 times
+// ══════════════════════════════════════════════
+function hiddenTap(){
+  tapCount++;clearTimeout(tapTimer);
+  tapTimer=setTimeout(()=>tapCount=0,2000);
+  if(tapCount>=5){tapCount=0;openAdmin();}
+}
+function openAdmin(){
+  document.getElementById("admin-overlay").classList.add("open");
+  document.getElementById("admin-auth").style.display="block";
+  document.getElementById("admin-actions").style.display="none";
+  document.getElementById("admin-err").textContent="";
+  document.getElementById("admin-pwd").value="";
+}
+function closeAdmin(){document.getElementById("admin-overlay").classList.remove("open");}
+function adminLogin(){
+  if(document.getElementById("admin-pwd").value!==ADMIN_PWD){
+    document.getElementById("admin-err").textContent="❌ Wrong password";return;
+  }
+  const nm    = localStorage.getItem(LS_NAME)||"None";
+  const plays = localStorage.getItem(LS_PLAYS)||"0";
+  const max   = cfg.maxPlays;
+  document.getElementById("admin-info").innerHTML=
+    `<b>Device status:</b><br>
+     Student locked: <b>${nm}</b><br>
+     Plays used: <b>${plays}</b> / <b>${max>0?max:"unlimited"}</b><br><br>
+     <i>Use "Clear This Student" to unlock name & reset plays.<br>
+     "Clear All Data" wipes everything on this device.</i>`;
+  document.getElementById("admin-auth").style.display="none";
+  document.getElementById("admin-actions").style.display="block";
+}
+function adminClearThis(){
+  if(!confirm("Reset the locked name and play count on this device?"))return;
+  localStorage.removeItem(LS_NAME);localStorage.removeItem(LS_PLAYS);
+  closeAdmin();location.reload();
+}
+function adminClearAll(){
+  if(!confirm("Clear ALL game data on this device?"))return;
+  localStorage.clear();closeAdmin();location.reload();
 }
 </script>
 </body>
