@@ -102,7 +102,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
     <div id="name-area"></div>
 
     <label>Game Key <span style="font-size:.75rem;opacity:.55">(No key? Contact: 8893572233)</span></label>
-    <input type="password" id="game-key-input" placeholder="Type the key here or paste it">
+    <input type="password" id="game-key-input" placeholder="Enter the key here or paste it">
 
     <div class="plays-info" id="plays-info" style="display:none"></div>
     <button class="btn btn-primary" id="start-btn" onclick="startGame()">🚀 Start Game</button>
@@ -127,13 +127,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
       ondragover="onDragOver(event,'vector')" ondragleave="onDragLeave(event,'vector')" ondrop="onDrop(event,'vector')">
       <span class="basket-count" id="cnt-vector">0</span>
       <div class="basket-label v">📐 Vector</div>
-      <div class="basket-formats">SVG · CDR · EPS · AI</div>
+      <div class="basket-formats">SVG · CDR · EPS</div>
     </div>
     <div class="basket basket-raster" id="basket-raster"
       ondragover="onDragOver(event,'raster')" ondragleave="onDragLeave(event,'raster')" ondrop="onDrop(event,'raster')">
       <span class="basket-count" id="cnt-raster">0</span>
       <div class="basket-label r">🖼 Raster</div>
-      <div class="basket-formats">PNG · JPEG · JPG · GIF · BMP· TIFF</div>
+      <div class="basket-formats">PNG · JPEG · JPG · GIF</div>
     </div>
   </div>
 </div>
@@ -197,22 +197,41 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVidJpgwocgLy3waTYuwBdfU-evzFCbfE1TsrUYyDwHw_a2PSuUohDmXufY4qf2F5V/exec";
 
 // Admin password (change this!)
-const ADMIN_PWD = "teacher123";
+const ADMIN_PWD = "Alees123";
 
 // LocalStorage keys
 const LS_NAME  = "rvg_name";
 const LS_PLAYS = "rvg_plays";
 
-// File definitions
+// File definitions — no fixed colors; color assigned randomly each time a card appears
 const FILES = [
-  {ext:"SVG", type:"vector",icon:"📐",color:"#2e7de0",hint:"Scalable Vector"},
-  {ext:"CDR", type:"vector",icon:"✏️", color:"#6a4cf7",hint:"CorelDRAW"},
-  {ext:"EPS", type:"vector",icon:"🔷",color:"#2e90e0",hint:"Encapsulated PS"},
-  {ext:"PNG", type:"raster",icon:"🖼", color:"#e05c2e",hint:"Lossless Bitmap"},
-  {ext:"JPEG",type:"raster",icon:"📷",color:"#d0402a",hint:"Compressed Photo"},
-  {ext:"JPG", type:"raster",icon:"📷",color:"#c83020",hint:"Compressed Photo"},
-  {ext:"GIF", type:"raster",icon:"🎞", color:"#c0341e",hint:"Animated Bitmap"},
+  {ext:"SVG",  type:"vector",icon:"📐",hint:"Scalable Vector"},
+  {ext:"CDR",  type:"vector",icon:"✏️", hint:"CorelDRAW"},
+  {ext:"EPS",  type:"vector",icon:"🔷",hint:"Encapsulated PS"},
+  {ext:"AI",   type:"vector",icon:"🎨",hint:"Adobe Illustrator"},
+  {ext:"PNG",  type:"raster",icon:"🖼", hint:"Lossless Bitmap"},
+  {ext:"JPEG", type:"raster",icon:"📷",hint:"Compressed Photo"},
+  {ext:"JPG",  type:"raster",icon:"📷",hint:"Compressed Photo"},
+  {ext:"GIF",  type:"raster",icon:"🎞", hint:"Animated Bitmap"},
+  {ext:"BMP",  type:"raster",icon:"🗃", hint:"Bitmap Image"},
+  {ext:"TIFF", type:"raster",icon:"🖨", hint:"High-Quality Print"},
 ];
+
+// Vivid color palette — randomly assigned per card appearance so colour gives no type hint
+const CARD_COLORS = [
+  "#e84393","#f05a28","#f5c800","#22c55e","#06b6d4",
+  "#8b5cf6","#ec4899","#14b8a6","#f97316","#3b82f6",
+  "#a855f7","#10b981","#ef4444","#0ea5e9","#84cc16",
+  "#fb923c","#6366f1","#d946ef","#2dd4bf","#facc15",
+];
+let _lastColor = -1;
+function randColor() {
+  // Pick a random color that is NOT the same as the previous one
+  let idx;
+  do { idx = Math.floor(Math.random() * CARD_COLORS.length); } while (idx === _lastColor);
+  _lastColor = idx;
+  return CARD_COLORS[idx];
+}
 
 // Game state
 let cfg = {gameTime:60, gameKey:"", maxPlays:1};
@@ -343,7 +362,11 @@ function makeCard(f) {
   d.draggable  = true;
   d.dataset.ext  = f.ext;
   d.dataset.type = f.type;
-  d.innerHTML = `<div class="file-icon">${f.icon}</div><div class="file-ext" style="color:${f.color}">.${f.ext}</div><div class="file-hint">${f.hint}</div>`;
+  const col = randColor();
+  // Color changes every time: text, border, and a faint background tint — all same random hue
+  d.style.borderColor = col;
+  d.style.background  = col + "18"; // ~10% opacity tint
+  d.innerHTML = `<div class="file-icon">${f.icon}</div><div class="file-ext" style="color:${col};text-shadow:0 0 12px ${col}55">.${f.ext}</div><div class="file-hint">${f.hint}</div>`;
   d.addEventListener("dragstart",e=>{dragItem=d;d.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
   d.addEventListener("dragend",  ()=>d.classList.remove("dragging"));
   d.addEventListener("touchstart",touchStart,{passive:false});
