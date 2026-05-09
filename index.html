@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raster vs Vector — Image Sorting Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── PASTE YOUR DEPLOYED WEB APP URL BELOW ── */
+  /* Edit the SCRIPT_URL constant in the <script> section */
+
+  :root {
+    --raster-color: #e05c2e;
+    --vector-color: #2e7de0;
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --text: #f0f2ff;
+    --muted: #8890b0;
+    --gold: #f5c842;
+    --green: #38d98a;
+    --red: #f04060;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; padding: 24px 20px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ── SETUP SCREEN ── */
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.6rem;
+    background: linear-gradient(135deg, var(--vector-color) 0%, var(--raster-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .tagline { color: var(--muted); font-size: 0.95rem; margin-bottom: 32px; text-align: center; }
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 440px;
+    border: 1px solid #2a2e45;
+  }
+  .card label { display: block; font-weight: 700; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .card select, .card input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1.5px solid #2e3250;
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .card select:focus, .card input:focus { border-color: var(--vector-color); }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, var(--vector-color), #6a4cf7); color: #fff; }
+  .btn-danger  { background: linear-gradient(135deg, var(--raster-color), #f04060); color: #fff; }
+  .btn-success { background: linear-gradient(135deg, #38d98a, #2eb8d0); color: #fff; }
+  .error-msg { color: var(--red); font-size: 0.85rem; text-align: center; margin-top: 10px; min-height: 20px; }
+
+  /* ── GAME SCREEN ── */
+  #screen-game { justify-content: flex-start; padding: 16px; gap: 0; }
+  .game-header {
+    width: 100%; max-width: 900px; display: flex;
+    align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .player-name { font-weight: 800; font-size: 1rem; }
+  .score-display { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--gold); }
+  /* Timer bomb */
+  .timer-wrap { display: flex; align-items: center; gap: 8px; }
+  .bomb-icon { font-size: 1.6rem; animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+  .timer-bar-bg { width: 120px; height: 10px; background: #2a2e45; border-radius: 5px; overflow: hidden; }
+  .timer-bar { height: 100%; border-radius: 5px; transition: width 1s linear, background 0.3s; }
+  .timer-text { font-family: 'Fredoka One', cursive; font-size: 1rem; min-width: 36px; text-align: right; }
+
+  /* Drag area */
+  .drag-zone { width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .file-card {
+    width: 130px; height: 120px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 2px dashed #2e3250;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .file-card:active { cursor: grabbing; }
+  .file-card.dragging { opacity: 0.4; transform: scale(0.95); }
+  .file-card.correct-flash { animation: flashGreen 0.5s forwards; }
+  .file-card.wrong-flash   { animation: flashRed 0.5s forwards; }
+  @keyframes flashGreen { 0%{background:var(--surface)} 50%{background:#1a4035;border-color:var(--green)} 100%{background:var(--surface)} }
+  @keyframes flashRed   { 0%{background:var(--surface)} 50%{background:#40121a;border-color:var(--red)}   100%{background:var(--surface)} }
+
+  .file-icon { font-size: 2.6rem; margin-bottom: 6px; }
+  .file-ext {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+  }
+  .file-hint { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+
+  /* Baskets */
+  .baskets { width: 100%; max-width: 900px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .basket {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    border: 2.5px dashed;
+    min-height: 130px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+    position: relative;
+  }
+  .basket.over { transform: scale(1.03); }
+  .basket-vector { border-color: var(--vector-color); background: rgba(46,125,224,0.07); }
+  .basket-raster { border-color: var(--raster-color); background: rgba(224,92,46,0.07); }
+  .basket-vector.over { background: rgba(46,125,224,0.18); }
+  .basket-raster.over { background: rgba(224,92,46,0.18); }
+  .basket-label { font-family: 'Fredoka One', cursive; font-size: 1.3rem; margin-bottom: 6px; }
+  .basket-label.v { color: var(--vector-color); }
+  .basket-label.r { color: var(--raster-color); }
+  .basket-formats { font-size: 0.8rem; color: var(--muted); text-align: center; }
+  .basket-count { position: absolute; top: 10px; right: 14px; font-family: 'Fredoka One', cursive; font-size: 1rem; opacity: 0.5; }
+  .score-popup {
+    position: fixed;
+    pointer-events: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    animation: floatUp 0.8s ease-out forwards;
+    z-index: 999;
+  }
+  @keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-70px)} }
+
+  /* ── RESULT SCREEN ── */
+  .result-card { max-width: 420px; text-align: center; }
+  .result-title { font-family: 'Fredoka One', cursive; font-size: 2.2rem; margin-bottom: 8px; }
+  .result-score { font-family: 'Fredoka One', cursive; font-size: 4rem; color: var(--gold); line-height: 1; margin: 16px 0; }
+  .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 24px; }
+  .stat-box { background: var(--surface2); border-radius: 12px; padding: 12px; }
+  .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .stat-val { font-family: 'Fredoka One', cursive; font-size: 1.6rem; }
+  .stat-val.c { color: var(--green); }
+  .stat-val.w { color: var(--red); }
+
+  /* ── MOBILE TOUCH DRAG GHOST ── */
+  #touch-ghost {
+    position: fixed; pointer-events: none; z-index: 9999;
+    opacity: 0.85; transform: translate(-50%, -50%);
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SETUP SCREEN ═══════════════════════════════ -->
+<div id="screen-setup" class="screen active">
+  <div class="logo">🖼 Raster vs Vector</div>
+  <p class="tagline">Drag each format into the right basket to score points!</p>
+  <div class="card">
+    <label>Select Your Name</label>
+    <select id="student-select">
+      <option value="">— Loading students… —</option>
+    </select>
+
+    <label>Game Key (if required)</label>
+    <input type="password" id="game-key-input" placeholder="Enter key or leave blank">
+
+    <button class="btn btn-primary" onclick="startGame()">🚀 Start Game</button>
+    <p class="error-msg" id="setup-error"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ GAME SCREEN ════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <span class="player-name">👤 <span id="hdr-name"></span></span>
+    <div class="timer-wrap">
+      <span class="bomb-icon" id="bomb">💣</span>
+      <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar"></div></div>
+      <span class="timer-text" id="timer-text">60</span>
+    </div>
+    <span class="score-display">⭐ <span id="hdr-score">0</span></span>
+  </div>
+
+  <div class="drag-zone" id="drag-zone">
+    <!-- cards injected by JS -->
+  </div>
+
+  <div class="baskets">
+    <div class="basket basket-vector" id="basket-vector"
+         ondragover="onDragOver(event,'vector')" ondragleave="onDragLeave(event,'vector')" ondrop="onDrop(event,'vector')">
+      <span class="basket-count" id="cnt-vector">0</span>
+      <div class="basket-label v">📐 Vector</div>
+      <div class="basket-formats">SVG · CDR · EPS</div>
+    </div>
+    <div class="basket basket-raster" id="basket-raster"
+         ondragover="onDragOver(event,'raster')" ondragleave="onDragLeave(event,'raster')" ondrop="onDrop(event,'raster')">
+      <span class="basket-count" id="cnt-raster">0</span>
+      <div class="basket-label r">🖼 Raster</div>
+      <div class="basket-formats">PNG · JPEG · JPG · GIF</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ RESULT SCREEN ════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="card result-card">
+    <div class="result-title" id="result-title">🎉 Time's Up!</div>
+    <p id="result-player" style="color:var(--muted); margin-bottom:4px;"></p>
+    <div class="result-score" id="result-score">0</div>
+    <p style="color:var(--muted); font-size:0.85rem; margin-bottom:4px;">points</p>
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-label">✅ Correct</div>
+        <div class="stat-val c" id="stat-correct">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">❌ Wrong</div>
+        <div class="stat-val w" id="stat-wrong">0</div>
+      </div>
+    </div>
+    <button class="btn btn-success" onclick="playAgain()" style="margin-bottom:12px;">🔁 Play Again</button>
+    <button class="btn btn-danger"  onclick="goHome()"   >🏠 Change Player</button>
+  </div>
+</div>
+
+<!-- Touch drag ghost -->
+<div id="touch-ghost"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  ⚙️  CONFIGURATION — paste your Apps Script Web App URL here
+// ══════════════════════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVidJpgwocgLy3waTYuwBdfU-evzFCbfE1TsrUYyDwHw_a2PSuUohDmXufY4qf2F5V/exec";
+
+// ── File data ─────────────────────────────────────────────────
+const ALL_FILES = [
+  { ext:"SVG",  type:"vector", icon:"📐", color:"#2e7de0", hint:"Scalable Vector" },
+  { ext:"CDR",  type:"vector", icon:"✏️",  color:"#6a4cf7", hint:"CorelDRAW" },
+  { ext:"EPS",  type:"vector", icon:"🔷",  color:"#2e90e0", hint:"Encapsulated PS" },
+  { ext:"PNG",  type:"raster", icon:"🖼",  color:"#e05c2e", hint:"Lossless Bitmap" },
+  { ext:"JPEG", type:"raster", icon:"📷",  color:"#d0402a", hint:"Compressed Photo" },
+  { ext:"JPG",  type:"raster", icon:"📷",  color:"#d0402a", hint:"Compressed Photo" },
+  { ext:"GIF",  type:"raster", icon:"🎞",  color:"#c0341e", hint:"Animated Bitmap" },
+];
+
+// ── State ────────────────────────────────────────────────────
+let config        = { gameTime: 60, gameKey: "" };
+let students      = [];
+let currentPlayer = "";
+let score         = 0;
+let correct       = 0;
+let wrong         = 0;
+let timeLeft      = 60;
+let timerInterval = null;
+let totalTime     = 60;
+let dragItem      = null;
+let queue         = [];
+let basketCnt     = { vector: 0, raster: 0 };
+let gameStartTime = null;
+
+// ── Init ─────────────────────────────────────────────────────
+window.onload = async () => {
+  try {
+    const cfg = await api("getConfig");
+    if (cfg.success) config = cfg;
+    const std = await api("getStudents");
+    if (std.success) {
+      students = std.students;
+      const sel = document.getElementById("student-select");
+      sel.innerHTML = '<option value="">— Select your name —</option>' +
+        students.map(n => `<option value="${n}">${n}</option>`).join("");
+    }
+  } catch(e) { console.warn("API not set up yet — using defaults."); }
+};
+
+async function api(action, data={}) {
+  if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS")) {
+    // Demo mode: return mock data
+    if (action==="getConfig")   return { success:true, gameTime:60, gameKey:"" };
+    if (action==="getStudents") return { success:true, students:["Alice","Bob","Charlie","Student 1","Student 2"] };
+    if (action==="saveScore")   return { success:true };
+  }
+  const res = await fetch(SCRIPT_URL, {
+    method:"POST",
+    body: JSON.stringify({ action, ...data })
+  });
+  return res.json();
+}
+
+// ── Start game ───────────────────────────────────────────────
+async function startGame() {
+  const sel   = document.getElementById("student-select");
+  const key   = document.getElementById("game-key-input").value.trim();
+  const err   = document.getElementById("setup-error");
+  const name  = sel.value;
+
+  if (!name) { err.textContent = "Please select your name."; return; }
+  if (config.gameKey && key !== config.gameKey) {
+    err.textContent = "❌ Invalid game key. Ask your teacher."; return;
+  }
+  err.textContent = "";
+  currentPlayer   = name;
+  totalTime       = config.gameTime || 60;
+  score=0; correct=0; wrong=0; basketCnt={vector:0,raster:0};
+
+  document.getElementById("hdr-name").textContent  = name;
+  document.getElementById("hdr-score").textContent = 0;
+  document.getElementById("cnt-vector").textContent = 0;
+  document.getElementById("cnt-raster").textContent = 0;
+
+  buildQueue();
+  renderQueue();
+  showScreen("game");
+  startTimer();
+  gameStartTime = Date.now();
+}
+
+function buildQueue() {
+  // Create a randomised infinite-ish queue of cards
+  queue = [];
+  const shuffled = [...ALL_FILES].sort(() => Math.random()-0.5);
+  queue = shuffled.concat([...ALL_FILES].sort(() => Math.random()-0.5));
+}
+
+function renderQueue() {
+  const zone = document.getElementById("drag-zone");
+  zone.innerHTML = "";
+  const visible = queue.slice(0, Math.min(5, queue.length));
+  visible.forEach((f, i) => {
+    const card = makeCard(f, i);
+    zone.appendChild(card);
+  });
+}
+
+function makeCard(f, idx) {
+  const div = document.createElement("div");
+  div.className = "file-card";
+  div.draggable  = true;
+  div.dataset.ext  = f.ext;
+  div.dataset.type = f.type;
+  div.dataset.idx  = idx;
+  div.innerHTML = `
+    <div class="file-icon">${f.icon}</div>
+    <div class="file-ext" style="color:${f.color}">.${f.ext}</div>
+    <div class="file-hint">${f.hint}</div>
+  `;
+  // Desktop drag
+  div.addEventListener("dragstart", e => {
+    dragItem = div;
+    div.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+  });
+  div.addEventListener("dragend", () => div.classList.remove("dragging"));
+  // Touch drag
+  div.addEventListener("touchstart", touchStart, {passive:false});
+  div.addEventListener("touchmove",  touchMove,  {passive:false});
+  div.addEventListener("touchend",   touchEnd,   {passive:false});
+  return div;
+}
+
+// ── Drag & Drop (desktop) ─────────────────────────────────────
+function onDragOver(e, side) {
+  e.preventDefault();
+  document.getElementById("basket-"+side).classList.add("over");
+}
+function onDragLeave(e, side) {
+  document.getElementById("basket-"+side).classList.remove("over");
+}
+function onDrop(e, side) {
+  e.preventDefault();
+  document.getElementById("basket-"+side).classList.remove("over");
+  if (dragItem) evaluate(dragItem, side);
+}
+
+// ── Touch drag ───────────────────────────────────────────────
+let touchCard = null, ghost = null;
+function touchStart(e) {
+  touchCard = e.currentTarget;
+  ghost     = document.getElementById("touch-ghost");
+  ghost.innerHTML  = touchCard.innerHTML;
+  ghost.style.width = touchCard.offsetWidth+"px";
+  ghost.style.height= touchCard.offsetHeight+"px";
+  ghost.style.background = getComputedStyle(touchCard).background;
+  ghost.style.borderRadius= "16px";
+  ghost.style.display="flex";
+  ghost.style.flexDirection="column";
+  ghost.style.alignItems="center";
+  ghost.style.justifyContent="center";
+  const t = e.touches[0];
+  ghost.style.left = t.clientX+"px";
+  ghost.style.top  = t.clientY+"px";
+}
+function touchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  ghost.style.left = t.clientX+"px";
+  ghost.style.top  = t.clientY+"px";
+  // highlight basket under finger
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  ["vector","raster"].forEach(s => {
+    const b = document.getElementById("basket-"+s);
+    if (b && b.contains(el)) b.classList.add("over");
+    else if (b) b.classList.remove("over");
+  });
+}
+function touchEnd(e) {
+  ghost.style.display = "none";
+  const t = e.changedTouches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  ["vector","raster"].forEach(s => {
+    const b = document.getElementById("basket-"+s);
+    if (b) { b.classList.remove("over"); if (b.contains(el)) evaluate(touchCard, s); }
+  });
+  touchCard = null;
+}
+
+// ── Evaluate drop ─────────────────────────────────────────────
+function evaluate(card, droppedOn) {
+  const correct_type = card.dataset.type;
+  const isCorrect    = correct_type === droppedOn;
+
+  if (isCorrect) {
+    score   += 1;
+    correct += 1;
+    card.classList.add("correct-flash");
+    spawnPopup(card, "+1", "#38d98a");
+    basketCnt[droppedOn]++;
+    document.getElementById("cnt-"+droppedOn).textContent = basketCnt[droppedOn];
+  } else {
+    score = Math.max(0, score - 1);
+    wrong += 1;
+    card.classList.add("wrong-flash");
+    spawnPopup(card, "-1", "#f04060");
+  }
+
+  document.getElementById("hdr-score").textContent = score;
+
+  // Remove card and pull next from queue
+  setTimeout(() => {
+    queue.shift();
+    if (queue.length < 5) {
+      queue = queue.concat([...ALL_FILES].sort(() => Math.random()-0.5));
+    }
+    renderQueue();
+  }, 400);
+}
+
+function spawnPopup(card, text, color) {
+  const r   = card.getBoundingClientRect();
+  const el  = document.createElement("div");
+  el.className = "score-popup";
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left  = (r.left + r.width/2) + "px";
+  el.style.top   = (r.top  - 10) + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+// ── Timer ────────────────────────────────────────────────────
+function startTimer() {
+  timeLeft = totalTime;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const pct = (timeLeft / totalTime) * 100;
+  const bar = document.getElementById("timer-bar");
+  bar.style.width = pct + "%";
+  bar.style.background = pct > 50 ? "#38d98a" : pct > 25 ? "#f5c842" : "#f04060";
+  document.getElementById("timer-text").textContent = timeLeft;
+  document.getElementById("bomb").textContent = timeLeft <= 10 ? "💥" : "💣";
+  // Shake bomb when low
+  if (timeLeft <= 10) document.getElementById("bomb").style.animation = "pulse 0.4s ease-in-out infinite";
+}
+
+async function endGame() {
+  clearInterval(timerInterval);
+  const elapsed = Math.round((Date.now() - gameStartTime) / 1000);
+
+  document.getElementById("result-title").textContent  = score >= 5 ? "🎉 Great Job!" : "⏰ Time's Up!";
+  document.getElementById("result-player").textContent = "Player: " + currentPlayer;
+  document.getElementById("result-score").textContent  = score;
+  document.getElementById("stat-correct").textContent  = correct;
+  document.getElementById("stat-wrong").textContent    = wrong;
+
+  showScreen("result");
+
+  // Save to sheet
+  try {
+    await api("saveScore", { name:currentPlayer, score, correct, wrong, time:elapsed });
+  } catch(e) { console.warn("Could not save score:", e); }
+}
+
+function playAgain() {
+  clearInterval(timerInterval);
+  startGame();
+}
+function goHome() {
+  clearInterval(timerInterval);
+  showScreen("setup");
+}
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-"+id).classList.add("active");
+}
+</script>
+</body>
+</html>
